@@ -4,7 +4,7 @@ kind: ConfigMap
 metadata:
   name: recom-config
 data:
- PRODUCT_CATALOG_SERVICE-ADDR: productcatalog:3550
+ PRODUCT_CATALOG_SERVICE_ADDR: productcatalog:3550
 ---
 apiVersion: v1
 kind: Pod
