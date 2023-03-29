@@ -1,14 +1,8 @@
-FROM ubuntu
-
-WORKDIR /app
-
-COPY requirements.txt /app
+FROM python:3.7-slim as base
+COPY requirements.txt .
+RUN pip install -r requirements.txt
+WORKDIR /email_server
 COPY . .
 
-RUN apt-get update && \
-    apt-get install -y python3 python3-pip && \
-    pip install -r requirements.txt && \
-    cd devops
-
-ENTRYPOINT ["python3"]
-CMD ["manage.py", "runserver", "0.0.0.0:8000"]
+EXPOSE 8080
+ENTRYPOINT [ "python", "email_server.py" ]
