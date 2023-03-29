@@ -1,38 +1,20 @@
-FROM python:3.7-slim as base
+# Use an official Python runtime as a parent image
+FROM python:3.9-slim-buster
 
-FROM base as builder
+# Set the working directory to /app
+WORKDIR /app
 
-RUN apt-get -qq update \
-    && apt-get install -y --no-install-recommends \
-        g++ \
-    && rm -rf /var/lib/apt/lists/*
+# Copy the current directory contents into the container at /app
+COPY . /app
 
-# get packages
-COPY requirements.txt .
-RUN pip install -r requirements.txt
+# Install any needed packages specified in requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
-FROM base as final
-# Enable unbuffered logging
-ENV PYTHONUNBUFFERED=1
-# Enable Profiler
-ENV ENABLE_PROFILER=1
-
-RUN apt-get -qq update \
-    && apt-get install -y --no-install-recommends \
-        wget
-
-# Download the grpc health probe
-RUN GRPC_HEALTH_PROBE_VERSION=v0.3.6 && \
-    wget -qO/bin/grpc_health_probe https://github.com/grpc-ecosystem/grpc-health-probe/releases/download/${GRPC_HEALTH_PROBE_VERSION}/grpc_health_probe-linux-amd64 && \
-    chmod +x /bin/grpc_health_probe
-
-WORKDIR /email_server
-
-# Grab packages from builder
-COPY --from=builder /usr/local/lib/python3.7/ /usr/local/lib/python3.7/
-
-# Add the application
-COPY . .
-
+# Make port 80 available to the world outside this container
 EXPOSE 8080
-ENTRYPOINT [ "python", "email_server.py" ]
+
+# Define environment variable
+ENV ENVIRONMENT="production"
+
+# Run app.py when the container launches
+CMD ["python", "app.py"]
