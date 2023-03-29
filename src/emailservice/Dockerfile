@@ -1,22 +1,38 @@
-# First stage: build environment
-FROM python:3.9-slim-buster AS build-env
+FROM python:3.7-slim as base
 
-WORKDIR /app
+FROM base as builder
 
+RUN apt-get -qq update \
+    && apt-get install -y --no-install-recommends \
+        g++ \
+    && rm -rf /var/lib/apt/lists/*
+
+# get packages
 COPY requirements.txt .
-
 RUN pip install -r requirements.txt
 
+FROM base as final
+# Enable unbuffered logging
+ENV PYTHONUNBUFFERED=1
+# Enable Profiler
+ENV ENABLE_PROFILER=1
+
+RUN apt-get -qq update \
+    && apt-get install -y --no-install-recommends \
+        wget
+
+# Download the grpc health probe
+RUN GRPC_HEALTH_PROBE_VERSION=v0.3.6 && \
+    wget -qO/bin/grpc_health_probe https://github.com/grpc-ecosystem/grpc-health-probe/releases/download/${GRPC_HEALTH_PROBE_VERSION}/grpc_health_probe-linux-amd64 && \
+    chmod +x /bin/grpc_health_probe
+
+WORKDIR /email_server
+
+# Grab packages from builder
+COPY --from=builder /usr/local/lib/python3.7/ /usr/local/lib/python3.7/
+
+# Add the application
 COPY . .
 
-RUN python setup.py install
-
-# Second stage: production environment
-FROM python:3.9-slim-buster AS prod-env
-
-WORKDIR /app
-
-COPY --from=build-env /usr/local/lib/python3.9/site-packages /usr/local/lib/python3.9/site-packages
-COPY --from=build-env /app /app
-
-CMD ["python", "app.py"]
+EXPOSE 8080
+ENTRYPOINT [ "python", "email_server.py" ]
