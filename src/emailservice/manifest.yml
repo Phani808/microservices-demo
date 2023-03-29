@@ -7,10 +7,10 @@ metadata:
     tier: app
 spec:
   containers:
-  - name: payment
+  - name: emailservice
     imagePullPolicy: Always
     image: phani997/emailservice:v1
-   resources:
+    resources:
       requests:
         cpu: "100m"
         memory: "128Mi"
