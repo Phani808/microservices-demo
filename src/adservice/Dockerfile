@@ -3,7 +3,7 @@ FROM openjdk:11-jre-slim
 
 # Set the working directory to /app
 WORKDIR /app
-RUN apt-get update -y
+RUN apt-get -y update && apt-get install -qqy
 
 # Copy the Gradle files
 COPY build.gradle .
