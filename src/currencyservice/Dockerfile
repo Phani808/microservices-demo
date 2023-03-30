@@ -1,21 +1,32 @@
-# Use an appropriate base image
-FROM node:12-alpine
+FROM node:12-alpine as base
 
-# Set the working directory to /app
-WORKDIR /app
+FROM base as builder
 
-# Copy the package.json and package-lock.json files to the container
+# Some packages (e.g. @google-cloud/profiler) require additional
+# deps for post-install scripts
+RUN apk add --update --no-cache \
+    python \
+    make \
+    g++
+
+WORKDIR /usr/src/app
+
 COPY package*.json ./
 
-# Install the application dependencies
 RUN npm install --only=production
 
+FROM base
 
-# Copy the source code to the container
+RUN GRPC_HEALTH_PROBE_VERSION=v0.3.6 && \
+    wget -qO/bin/grpc_health_probe https://github.com/grpc-ecosystem/grpc-health-probe/releases/download/${GRPC_HEALTH_PROBE_VERSION}/grpc_health_probe-linux-amd64 && \
+    chmod +x /bin/grpc_health_probe
+
+WORKDIR /usr/src/app
+
+COPY --from=builder /usr/src/app/node_modules ./node_modules
+
 COPY . .
 
-# Expose port 3000
 EXPOSE 7000
 
-# Run the application
-CMD ["npm", "start"]
+ENTRYPOINT [ "node", "server.js" ]
