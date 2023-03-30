@@ -1,21 +1,19 @@
-# Use a lightweight alpine image with Go preinstalled
-FROM golang:alpine 
+FROM golang:1.15-alpine as builder
+RUN apk add --no-cache ca-certificates git
+WORKDIR /src
 
-# Set the working directory inside the container
-WORKDIR /app
-
-# Copy the Go module files and download dependencies
+# restore dependencies
 COPY go.mod go.sum ./
 RUN go mod download
-
-# Copy the rest of the application files
 COPY . .
+RUN go build -o /go/bin/frontend .
 
-# Build the application
-RUN go build -o app .
-
-# Expose the port that the application will listen on
+FROM alpine as release
+RUN apk add --no-cache ca-certificates \
+    busybox-extras net-tools bind-tools
+WORKDIR /frontend
+COPY --from=builder /go/bin/frontend /frontend/server
+COPY ./templates ./templates
+COPY ./static ./static
 EXPOSE 8080
-
-# Start the application
-CMD ["./app"]
+ENTRYPOINT ["/frontend/server"]
