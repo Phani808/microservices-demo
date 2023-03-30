@@ -11,7 +11,8 @@ RUN apk add --update --no-cache \
 COPY package*.json ./
 
 # Install the application dependencies
-RUN npm install
+RUN npm install --only=production
+
 
 # Copy the source code to the container
 COPY . .
