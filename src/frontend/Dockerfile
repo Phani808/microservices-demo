@@ -1,30 +1,21 @@
-# Build stage
-FROM golang:1.17-alpine as builder
+# Use a lightweight alpine image with Go preinstalled
+FROM golang:alpine 
 
-# Set the working directory to /app
+# Set the working directory inside the container
 WORKDIR /app
 
-# Copy the Go module files
+# Copy the Go module files and download dependencies
 COPY go.mod go.sum ./
-
-# Download dependencies
 RUN go mod download
 
-# Copy the source code into the container
+# Copy the rest of the application files
 COPY . .
 
 # Build the application
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o app .
+RUN go build -o app .
 
-# Final stage
-FROM gcr.io/distroless/static
-
-# Set the working directory to /app
-WORKDIR /app
-
-# Copy only the built binary from the builder stage
-COPY --from=builder /app/app .
+# Expose the port that the application will listen on
 EXPOSE 8080
 
-# Set the entrypoint to the built binary
-ENTRYPOINT ["/app/app"]
+# Start the application
+CMD ["./app"]
