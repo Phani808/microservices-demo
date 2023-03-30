@@ -1,11 +1,13 @@
-# Base image
-FROM openjdk:11
-
-# Set the working directory
+# Stage 1: Build the application
+FROM gradle:7.2.0-jdk11 AS build
 WORKDIR /app
+COPY build.gradle .
+COPY src src
+RUN gradle build --no-daemon
 
-# Copy the application jar file to the container
-COPY target/my-app.jar /app/my-app.jar
+# Stage 2: Run the application
+FROM openjdk:11-jre-slim
+WORKDIR /app
+COPY --from=build /app/build/libs/my-app.jar .
 EXPOSE 9555
-# Set the command to run the application
-CMD ["java", "-jar", "/app/my-app.jar"]
+CMD ["java", "-jar", "my-app.jar"]
