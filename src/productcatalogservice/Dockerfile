@@ -1,29 +1,17 @@
-# Use the official Golang image as the build image
-FROM golang:latest as builder
+# Use the official Golang image as a parent image
+FROM golang:latest
 
 # Set the working directory to /app
 WORKDIR /app
 
-# Copy the current directory contents into the container at /app
+# Copy the source code to the container
 COPY . .
 
-# Install any needed dependencies
-RUN go get -d -v ./...
+# Build the application
+RUN go build -o app .
 
-# Build the Go application
-RUN go build -o /app/main .
-
-# Use distroless as the base image
-FROM gcr.io/distroless/base
-
-# Set the environment variables
-ENV PORT=3550
-
-# Expose port 3550 for the application
+# Expose port 8080
 EXPOSE 3550
 
-# Copy the executable from the builder image
-COPY --from=builder /app/main /
-
-# Run the executable
-CMD ["/main"]
+# Run the application
+CMD ["./app"]
