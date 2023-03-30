@@ -6,9 +6,7 @@ WORKDIR /app
 RUN apt-get -y update && apt-get install -qqy
 
 # Copy the Gradle files
-COPY build.gradle .
-COPY gradlew .
-
+COPY . .
 # Copy the source code
 COPY src src
 
