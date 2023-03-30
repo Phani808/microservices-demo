@@ -1,5 +1,5 @@
-# Use an appropriate base image
-FROM gcc:latest
+# Use distroless base image for C
+FROM gcr.io/distroless/cc-debian10
 
 # Set the working directory to /app
 WORKDIR /app
@@ -8,7 +8,7 @@ WORKDIR /app
 COPY . .
 
 # Compile the application
-RUN gcc -o app main.c
+RUN cc -o app main.c
 
 EXPOSE 7070
 
