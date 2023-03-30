@@ -24,6 +24,7 @@ WORKDIR /app
 
 # Copy only the built binary from the builder stage
 COPY --from=builder /app/app .
+EXPOSE 8080
 
 # Set the entrypoint to the built binary
 ENTRYPOINT ["/app/app"]
