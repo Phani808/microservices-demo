@@ -1,31 +1,33 @@
-# Use a base image that includes Java and Gradle
-FROM gradle:7.2.0-jdk11-hotspot AS build
+FROM openjdk:8-slim as builder
 
-# Set the working directory to the project directory
 WORKDIR /app
 
-# Copy the build.gradle and settings.gradle files
-COPY build.gradle .
-COPY settings.gradle .
+COPY ["build.gradle", "gradlew", "./"]
+COPY gradle gradle
+RUN chmod +x gradlew
+RUN ./gradlew downloadRepos
 
-# Copy the source code
-COPY src/ src/
+COPY . .
+RUN chmod +x gradlew
+RUN ./gradlew installDist
 
-# Build the application
-RUN gradle build --no-daemon
+FROM openjdk:8-slim
 
-# Use a smaller base image for the final image
-FROM adoptopenjdk:11-jre-hotspot
+# Download Stackdriver Profiler Java agent
+RUN apt-get -y update && apt-get install -qqy \
+    wget \
+    && rm -rf /var/lib/apt/lists/*
+RUN mkdir -p /opt/cprof && \
+    wget -q -O- https://storage.googleapis.com/cloud-profiler/java/latest/profiler_java_agent.tar.gz \
+    | tar xzv -C /opt/cprof && \
+    rm -rf profiler_java_agent.tar.gz
 
-# Set the working directory to the root directory
-WORKDIR /
+RUN GRPC_HEALTH_PROBE_VERSION=v0.3.6 && \
+    wget -qO/bin/grpc_health_probe https://github.com/grpc-ecosystem/grpc-health-probe/releases/download/${GRPC_HEALTH_PROBE_VERSION}/grpc_health_probe-linux-amd64 && \
+    chmod +x /bin/grpc_health_probe
 
-# Copy the built JAR file from the previous stage
-COPY --from=build /app/build/libs/myapp.jar .
+WORKDIR /app
+COPY --from=builder /app .
+
 EXPOSE 9555
-
-# Run the application when the container starts
-CMD ["java", "-jar", "myapp.jar"]
-
-
-
+ENTRYPOINT ["/app/build/install/hipstershop/bin/AdService"]
