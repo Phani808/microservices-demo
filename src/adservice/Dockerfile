@@ -1,20 +1,11 @@
-# Use the official image as a parent image
-FROM openjdk:11-jre-slim
+# Base image
+FROM openjdk:11
 
-# Set the working directory to /app
+# Set the working directory
 WORKDIR /app
-RUN apt-get -y update && apt-get install -qqy
 
-# Copy the Gradle files
-COPY . .
-# Copy the source code
-COPY src src
-
-# Run Gradle to build the application
-RUN ./gradlew build --no-daemon
-
-# Expose port 8080
+# Copy the application jar file to the container
+COPY target/my-app.jar /app/my-app.jar
 EXPOSE 9555
-
-# Run the application
-CMD ["java", "-jar", "build/libs/your-application-name.jar"]
+# Set the command to run the application
+CMD ["java", "-jar", "/app/my-app.jar"]
